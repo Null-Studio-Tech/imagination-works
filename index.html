@@ -9,8 +9,10 @@
 </head>
 
 <body>
-  <div id="app">
-    <h1>Null Studio</h1>
+  <div id="app" class="relative w-screen h-screen overflow-hidden bg-black">
+    <h1 class="absolute left-3 top-3 text-white z-10 bg-gray-700">Null Studio</h1>
+    <div id="render" class="absolute inset-0"></div>
+    <div id="content" class="w-full h-[2048px]"></div>
   </div>
   <div id="unsupportedTip" class="w-screen h-screen justify-center items-center bg-black text-white text-5xl font-bold" style="display: none;">
     浏览器不支持webGL,请更改配置或使用其他浏览器</div>

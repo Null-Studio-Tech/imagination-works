@@ -5,6 +5,12 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  gsap:
+    specifier: ^3.12.2
+    version: 3.12.2
+  gsap-trial:
+    specifier: ^3.12.2
+    version: 3.12.2
   three:
     specifier: ^0.157.0
     version: 0.157.0
@@ -519,6 +525,14 @@ packages:
       once: 1.4.0
       path-is-absolute: 1.0.1
     dev: true
+
+  /gsap-trial@3.12.2:
+    resolution: {integrity: sha512-6oSqqRZB0jcJmCBmM8I6UECAAacZOn76r5/QOIOD4gewYxoWuecDt0A4oT5zAT1fhq40lWHYAgXfN9Kd8hWQcQ==}
+    dev: false
+
+  /gsap@3.12.2:
+    resolution: {integrity: sha512-EkYnpG8qHgYBFAwsgsGEqvT1WUidX0tt/ijepx7z8EUJHElykg91RvW1XbkT59T0gZzzszOpjQv7SE41XuIXyQ==}
+    dev: false
 
   /has@1.0.4:
     resolution: {integrity: sha512-qdSAmqLF6209RFj4VVItywPMbm3vWylknmB3nvNiUIs72xAimcM8nVYxYr7ncvZq5qzk9MKIZR8ijqD/1QuYjQ==}
