@@ -9,12 +9,31 @@
 </head>
 
 <body>
-  <div id="app" class="relative w-screen h-screen overflow-hidden bg-black">
-    <h1 class="absolute left-3 top-3 text-white z-10 bg-gray-700">Null Studio</h1>
-    <div id="render" class="absolute inset-0"></div>
-    <div id="content" class="w-full h-[2048px]"></div>
+  <div id="app" class="relative w-screen h-screen bg-black overflow-hidden">
+    <div id="render" class="absolute w-screen h-screen z-0"></div>
+    <div id="content" class="w-full min-h-[2048px] bg-transparent z-10">
+      <div class="scene h-screen">
+        <h1 id="logo" class="absolute left-3 top-3 text-white text-3xl font-bold z-100 bg-transparent">Null Studio</h1>
+      </div>
+      <div class="scene h-screen flex items-center">
+        <section class="w-40 h-40 text-white border-2 border-solid rounded-full flex justify-center items-center">
+          Section A
+        </section>
+      </div>
+      <div class="scene h-screen flex items-center">
+        <section class="w-40 h-40 text-white border-2 border-solid rounded-full flex justify-center items-center">
+          Section B
+        </section>
+      </div>
+      <div class="scene h-screen flex items-center">
+        <section class="w-40 h-40 text-white border-2 border-solid rounded-full flex justify-center items-center">
+          Section C
+        </section>
+      </div>
+    </div>
   </div>
-  <div id="unsupportedTip" class="w-screen h-screen justify-center items-center bg-black text-white text-5xl font-bold" style="display: none;">
+  <div id="unsupportedTip" class="w-screen h-screen justify-center items-center bg-black text-white text-5xl font-bold"
+    style="display: none;">
     浏览器不支持webGL,请更改配置或使用其他浏览器</div>
   <script type="module" src="/src/main.ts"></script>
 </body>
