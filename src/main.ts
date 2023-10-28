@@ -55,6 +55,59 @@ const createOrbitControls = (render: THREE.WebGLRenderer, camera: THREE.Camera) 
   return controls;
 }
 
+let sun, sunGeometry, pointGeometry: THREE.BufferGeometry, sunScales: Float32Array, sunPoints: THREE.Points, positionArr, originSunPositions: Float32Array, randomParams: Array<any>=[];
+
+const initSun = (glft: any ) => {
+
+    // 太阳
+    sun =  glft.scene.getObjectByName('sun') as THREE.Mesh;
+
+    const r = 3;
+    sunGeometry = new THREE.SphereGeometry(r, 100, 100);
+    sunGeometry.name = 'sunGeometry';
+    console.log('sun-->', sun)
+
+    pointGeometry = new THREE.BufferGeometry();
+    positionArr = sunGeometry.attributes.position.array;
+    positionArr = positionArr.map(value => (value + (Math.random() - 0.5) * 0.2));
+    let temVector = new THREE.Vector3();
+    for(let i =0; i<positionArr.length; i+=3) {
+        temVector.x = positionArr[i];
+        temVector.y = positionArr[i+1];
+        temVector.z = positionArr[i+2];
+        temVector.normalize();
+        positionArr[i] = temVector.x*r;
+        positionArr[i+1] = temVector.y*r;
+        positionArr[i+2] = temVector.z*r;
+        randomParams[i+2] = Math.random()+0.03;
+        randomParams[i+1] = (Math.random()*10-7)/10+0.2;
+        randomParams[i] = (Math.random()*10-7)/10+0.2;
+    }
+
+    originSunPositions = Float32Array.from(positionArr)
+    pointGeometry.setAttribute('position', new THREE.BufferAttribute(positionArr, 3));
+    pointGeometry.setAttribute('originSunPosition', new THREE.BufferAttribute(originSunPositions, 3));
+    sunScales = new Float32Array(sunGeometry.attributes.position.array.length / 3).fill(2);
+
+    pointGeometry.setAttribute('scale', new THREE.BufferAttribute(sunScales, 1));
+
+    const pointMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            color: { value: new THREE.Color(0x98a3ed) },
+        },
+        vertexShader: document.getElementById('vertexshader')?.textContent || undefined,
+        fragmentShader: document.getElementById('fragmentshader')?.textContent || undefined
+
+    });
+    sunPoints = new THREE.Points(pointGeometry, pointMaterial)
+    sunPoints.name = 'sunPoints'
+    sunPoints.position.copy(sun.position);
+
+
+    glft.scene.remove(sun);
+    glft.scene.add(sunPoints);
+}
+
 
 // 渲染流程
 const init = () => {
@@ -81,10 +134,14 @@ const init = () => {
   //   renderer.render(scene, camera);
   //   // console.log(camera.position);
   // })
+  // 创建一个粗细为20的坐标轴
+  // const axes = new THREE.AxesHelper(20)
+  // scene.add(axes)
 
   // 加载模型文件
   new GLTFLoader().setPath('models/').load('myhome_export.gltf', (glft) => {
     console.log(glft);
+    initSun(glft);
 
     // 加灯光
     const light1 = glft.scene.getObjectByName('lightProxy_01') as THREE.Mesh;
@@ -139,6 +196,49 @@ const init = () => {
     composer.addPass(bloomPass);
     composer.addPass(outputPass);
 
+    // setTimeout(() => {
+    //   const dist = 5.999 * 0.65;
+    //   mixer.setTime(dist);
+    //   cameraMixer.setTime(dist);
+    //   moveSunPoints();
+    //   composer.render();
+    // }, 1000)
+
+    // 粒子效果，内部计算逻辑可以写到shader中，暂时先写这里，性能尚可
+    const moveSunPoints = () => {
+      const cameraZ = cameraObj.position.z+10;
+      const sunZ = sunPoints.position.z;
+      const bollDis = 200;
+      const baseDis = 78;
+      const cameraY = 50; // 固定一个高度吧
+      // if (dis > baseDis+1) return;
+      // console.log('cameraObj-->', cameraObj.position.z, sunPoints.geometry.attributes.position, sunPoints);
+      let positions = sunPoints.geometry.attributes.position;
+      // console.log('cameraObj-->', cameraObj, positions, sunPoints.position)
+
+      const arr = positions.array;
+      for (let i = 0; i < arr.length; i += 3) {
+        const pz = originSunPositions[i+2];
+        const disZ = (sunZ+pz)-cameraZ;
+        const disY = (sunPoints.position.y+originSunPositions[i+1])-cameraY;
+        const dis = Math.sqrt(disZ*disZ + disY*disY);
+        if (dis < baseDis ) {
+          positions.array[i+2] = (originSunPositions[i+2] + bollDis*(baseDis-dis)/baseDis)*randomParams[i+2]*20;
+          positions.array[i] = originSunPositions[i] + randomParams[i]*positions.array[i+2]*2; // 横向 x
+          positions.array[i+1] = originSunPositions[i+1] + randomParams[i+1]*positions.array[i+2]*2; // 纵向 y
+        } else {
+          positions.array[i] = originSunPositions[i];
+          positions.array[i+1] = originSunPositions[i+1];
+          positions.array[i+2] = originSunPositions[i+2]; 
+        }
+
+        const itemScale = positions.array[i+2]/20;
+        sunScales[i] =  itemScale>5 ? 5: (itemScale<1 ? 1 :itemScale);
+        
+      }
+      pointGeometry.setAttribute('scale', new THREE.BufferAttribute(sunScales, 1));
+      positions.needsUpdate = true;
+    }
 
     ScrollSmoother.create({
       wrapper: '#app',
@@ -147,7 +247,7 @@ const init = () => {
       ignoreMobileResize: true,
       normalizeScroll: true,
       onUpdate: (self) => {
-        console.log(self.progress);
+        moveSunPoints();
         mixer.setTime(5.999 * self.progress);
         cameraMixer.setTime(5.999 * self.progress);
         renderer.render(scene, cameraObj);
