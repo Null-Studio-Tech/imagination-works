@@ -79,7 +79,7 @@ const initSun = (obj:THREE.Object3D) => {
     positionArr[i + 1] = temVector.y * r;
     positionArr[i + 2] = temVector.z * r;
     randomParams[i + 2] = Math.random() + 0.03;
-    randomParams[i + 1] = (Math.random() * 10 - 7) / 10 + 0.2;
+    randomParams[i + 1] = Math.random() - 0.8;
     randomParams[i] = (Math.random() * 10 - 7) / 10 + 0.2;
   }
 
@@ -101,6 +101,7 @@ const initSun = (obj:THREE.Object3D) => {
   sunPoints = new THREE.Points(pointGeometry, pointMaterial)
   sunPoints.name = 'sunPoints'
   sunPoints.position.copy(sun.position);
+  sunPoints.rotateX(-90);
 
   obj.remove(sun);
   obj.add(sunPoints);
@@ -197,42 +198,43 @@ const init = () => {
     composer.addPass(outputPass);
 
     // setTimeout(() => {
-    //   const dist = 5.999 * 0.65;
+    //   const dist = 5.999 * 0.58;
     //   mixer.setTime(dist);
-    //   cameraMixer.setTime(dist);
+    //   // cameraMixer.setTime(dist);
     //   moveSunPoints();
     //   composer.render();
     // }, 1000)
 
     // 粒子效果，内部计算逻辑可以写到shader中，暂时先写这里，性能尚可
     const moveSunPoints = () => {
-      const cameraZ = cameraObj.position.z + 10;
-      const sunZ = sunPoints.position.z;
+      const cameraZ = house.position.z;
+      const sunZ = 80;
       const bollDis = 200;
-      const baseDis = 78;
-      const cameraY = 50; // 固定一个高度吧
-      // if (dis > baseDis+1) return;
-      // console.log('cameraObj-->', cameraObj.position.z, sunPoints.geometry.attributes.position, sunPoints);
+      const baseDis = 85;
+      const cameraY = 70; // 固定一个高度吧
+
+      // console.log('house-->',house.position.y, house.position.z, sunPoints.geometry.attributes.position, sunPoints);
+      // console.log('house-->', house.position.z, sunPoints.geometry.attributes.position, sunPoints);
       let positions = sunPoints.geometry.attributes.position;
-      // console.log('cameraObj-->', cameraObj, positions, sunPoints.position)
 
       const arr = positions.array;
       for (let i = 0; i < arr.length; i += 3) {
         const pz = originSunPositions[i + 2];
-        const disZ = (sunZ + pz) - cameraZ;
-        const disY = (sunPoints.position.y + originSunPositions[i + 1]) - cameraY;
+        const disZ = (sunZ + pz) + cameraZ;
+        const disY = originSunPositions[i + 1] - cameraY;
         const dis = Math.sqrt(disZ * disZ + disY * disY);
         if (dis < baseDis) {
-          positions.array[i + 2] = (originSunPositions[i + 2] + bollDis * (baseDis - dis) / baseDis) * randomParams[i + 2] * 20;
-          positions.array[i] = originSunPositions[i] + randomParams[i] * positions.array[i + 2] * 2; // 横向 x
-          positions.array[i + 1] = originSunPositions[i + 1] + randomParams[i + 1] * positions.array[i + 2] * 2; // 纵向 y
+          const target = (originSunPositions[i + 2] + bollDis * (baseDis - dis) / baseDis);
+          positions.array[i + 2] = target > 0 ? target * randomParams[i + 2] * 10 : target;
+          positions.array[i] = originSunPositions[i] + randomParams[i] * positions.array[i + 2] * 3; // 横向 x
+          positions.array[i + 1] = originSunPositions[i + 1] + randomParams[i + 1] * positions.array[i + 2] * 3; // 纵向 y
         } else {
           positions.array[i] = originSunPositions[i];
           positions.array[i + 1] = originSunPositions[i + 1];
           positions.array[i + 2] = originSunPositions[i + 2];
         }
 
-        const itemScale = positions.array[i + 2] / 20;
+        const itemScale = positions.array[i + 2] / 5;
         sunScales[i] = itemScale > 5 ? 5 : (itemScale < 1 ? 1 : itemScale);
 
       }
@@ -279,7 +281,7 @@ const init = () => {
       ignoreMobileResize: true,
       normalizeScroll: true,
       onUpdate: (self) => {
-        // moveSunPoints();
+        moveSunPoints();
         // console.log(self.progress);
         mixer.setTime(5.999 * self.progress);
         renderer.render(scene, cameraObj);
