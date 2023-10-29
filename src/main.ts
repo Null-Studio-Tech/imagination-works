@@ -103,8 +103,7 @@ const initSun = (obj:THREE.Object3D) => {
   sunPoints.position.copy(sun.position);
 
   obj.remove(sun);
-  return sunPoints;
-  // obj.add(sunPoints);
+  obj.add(sunPoints);
 }
 
 
@@ -160,7 +159,7 @@ const init = () => {
     house.add(lightC);
 
     //更新太阳
-    glft.scene.add(initSun(house));
+    initSun(house);
 
     scene.add(glft.scene);
 
@@ -242,8 +241,6 @@ const init = () => {
     }
     let mouseX: number = 0;
     let mouseY: number = 0;
-    const zoomBase = 1;
-    const factorBase = 100;
     const onMouseMove = (event: PointerEvent) => {
       if (event.isPrimary === false) return;
       mouseX = (event.clientX - renderConfig.RENDER_WIDTH / 2) * 2 / renderConfig.RENDER_WIDTH;
@@ -282,7 +279,7 @@ const init = () => {
       ignoreMobileResize: true,
       normalizeScroll: true,
       onUpdate: (self) => {
-        moveSunPoints();
+        // moveSunPoints();
         // console.log(self.progress);
         mixer.setTime(5.999 * self.progress);
         renderer.render(scene, cameraObj);
