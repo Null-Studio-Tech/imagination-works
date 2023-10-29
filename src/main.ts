@@ -55,57 +55,56 @@ const createCamera = (camera?: THREE.PerspectiveCamera) => {
 //   return controls;
 // }
 
-let sun, sunGeometry, pointGeometry: THREE.BufferGeometry, sunScales: Float32Array, sunPoints: THREE.Points, positionArr, originSunPositions: Float32Array, randomParams: Array<any>=[];
+let sun, sunGeometry, pointGeometry: THREE.BufferGeometry, sunScales: Float32Array, sunPoints: THREE.Points, positionArr, originSunPositions: Float32Array, randomParams: Array<any> = [];
 
-const initSun = (glft: any ) => {
+const initSun = (obj:THREE.Object3D) => {
+  // 太阳
+  sun = obj.getObjectByName('sun') as THREE.Mesh;
 
-    // 太阳
-    sun =  glft.scene.getObjectByName('sun') as THREE.Mesh;
+  const r = 3;
+  sunGeometry = new THREE.SphereGeometry(r, 100, 100);
+  sunGeometry.name = 'sunGeometry';
+  console.log('sun-->', sun)
 
-    const r = 3;
-    sunGeometry = new THREE.SphereGeometry(r, 100, 100);
-    sunGeometry.name = 'sunGeometry';
-    console.log('sun-->', sun)
+  pointGeometry = new THREE.BufferGeometry();
+  positionArr = sunGeometry.attributes.position.array;
+  positionArr = positionArr.map(value => (value + (Math.random() - 0.5) * 0.2));
+  let temVector = new THREE.Vector3();
+  for (let i = 0; i < positionArr.length; i += 3) {
+    temVector.x = positionArr[i];
+    temVector.y = positionArr[i + 1];
+    temVector.z = positionArr[i + 2];
+    temVector.normalize();
+    positionArr[i] = temVector.x * r;
+    positionArr[i + 1] = temVector.y * r;
+    positionArr[i + 2] = temVector.z * r;
+    randomParams[i + 2] = Math.random() + 0.03;
+    randomParams[i + 1] = (Math.random() * 10 - 7) / 10 + 0.2;
+    randomParams[i] = (Math.random() * 10 - 7) / 10 + 0.2;
+  }
 
-    pointGeometry = new THREE.BufferGeometry();
-    positionArr = sunGeometry.attributes.position.array;
-    positionArr = positionArr.map(value => (value + (Math.random() - 0.5) * 0.2));
-    let temVector = new THREE.Vector3();
-    for(let i =0; i<positionArr.length; i+=3) {
-        temVector.x = positionArr[i];
-        temVector.y = positionArr[i+1];
-        temVector.z = positionArr[i+2];
-        temVector.normalize();
-        positionArr[i] = temVector.x*r;
-        positionArr[i+1] = temVector.y*r;
-        positionArr[i+2] = temVector.z*r;
-        randomParams[i+2] = Math.random()+0.03;
-        randomParams[i+1] = (Math.random()*10-7)/10+0.2;
-        randomParams[i] = (Math.random()*10-7)/10+0.2;
-    }
+  originSunPositions = Float32Array.from(positionArr)
+  pointGeometry.setAttribute('position', new THREE.BufferAttribute(positionArr, 3));
+  pointGeometry.setAttribute('originSunPosition', new THREE.BufferAttribute(originSunPositions, 3));
+  sunScales = new Float32Array(sunGeometry.attributes.position.array.length / 3).fill(2);
 
-    originSunPositions = Float32Array.from(positionArr)
-    pointGeometry.setAttribute('position', new THREE.BufferAttribute(positionArr, 3));
-    pointGeometry.setAttribute('originSunPosition', new THREE.BufferAttribute(originSunPositions, 3));
-    sunScales = new Float32Array(sunGeometry.attributes.position.array.length / 3).fill(2);
+  pointGeometry.setAttribute('scale', new THREE.BufferAttribute(sunScales, 1));
 
-    pointGeometry.setAttribute('scale', new THREE.BufferAttribute(sunScales, 1));
+  const pointMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      color: { value: new THREE.Color(0x98a3ed) },
+    },
+    vertexShader: document.getElementById('vertexshader')?.textContent || undefined,
+    fragmentShader: document.getElementById('fragmentshader')?.textContent || undefined
 
-    const pointMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-            color: { value: new THREE.Color(0x98a3ed) },
-        },
-        vertexShader: document.getElementById('vertexshader')?.textContent || undefined,
-        fragmentShader: document.getElementById('fragmentshader')?.textContent || undefined
+  });
+  sunPoints = new THREE.Points(pointGeometry, pointMaterial)
+  sunPoints.name = 'sunPoints'
+  sunPoints.position.copy(sun.position);
 
-    });
-    sunPoints = new THREE.Points(pointGeometry, pointMaterial)
-    sunPoints.name = 'sunPoints'
-    sunPoints.position.copy(sun.position);
-
-
-    glft.scene.remove(sun);
-    glft.scene.add(sunPoints);
+  obj.remove(sun);
+  return sunPoints;
+  // obj.add(sunPoints);
 }
 
 
@@ -139,25 +138,29 @@ const init = () => {
   // scene.add(axes)
 
   // 加载模型文件
-  new GLTFLoader().setPath('models/').load('myhome_export.gltf', (glft) => {
+  new GLTFLoader().setPath('models/').load('myhome_camFixed.gltf', (glft) => {
     console.log(glft);
-    initSun(glft);
 
+    // 房屋
+    const house = glft.scene.getObjectByName('house') as THREE.Mesh;
     // 加灯光
-    const light1 = glft.scene.getObjectByName('lightProxy_01') as THREE.Mesh;
+    const light1 = house.getObjectByName('lightProxy_01') as THREE.Mesh;
     lightA.position.copy(light1.position);
-    glft.scene.remove(light1);
-    glft.scene.add(lightA);
+    house.remove(light1);
+    house.add(lightA);
 
-    const light2 = glft.scene.getObjectByName('lightProxy_02') as THREE.Mesh;
+    const light2 = house.getObjectByName('lightProxy_02') as THREE.Mesh;
     lightB.position.copy(light2.position);
-    glft.scene.remove(light2);
-    glft.scene.add(lightB);
+    house.remove(light2);
+    house.add(lightB);
 
-    const light3 = glft.scene.getObjectByName('lightProxy_03') as THREE.Mesh;
+    const light3 = house.getObjectByName('lightProxy_03') as THREE.Mesh;
     lightC.position.copy(light3.position);
-    glft.scene.remove(light3);
-    glft.scene.add(lightC);
+    house.remove(light3);
+    house.add(lightC);
+
+    //更新太阳
+    glft.scene.add(initSun(house));
 
     scene.add(glft.scene);
 
@@ -173,11 +176,9 @@ const init = () => {
 
     // 创建动画mixer 相机和椅子分开，动画要作用在相机对象上
     let mixer: THREE.AnimationMixer;
-    let cameraMixer: THREE.AnimationMixer;
     if (glft.animations.length > 0) {
       mixer = new THREE.AnimationMixer(glft.scene);
-      cameraMixer = new THREE.AnimationMixer(cameraObj);
-      cameraMixer.clipAction(glft.animations[0]).play();
+      mixer.clipAction(glft.animations[0]).play();
       mixer.clipAction(glft.animations[1]).play();
       mixer.clipAction(glft.animations[2]).play();
     }
@@ -206,7 +207,7 @@ const init = () => {
 
     // 粒子效果，内部计算逻辑可以写到shader中，暂时先写这里，性能尚可
     const moveSunPoints = () => {
-      const cameraZ = cameraObj.position.z+10;
+      const cameraZ = cameraObj.position.z + 10;
       const sunZ = sunPoints.position.z;
       const bollDis = 200;
       const baseDis = 78;
@@ -218,38 +219,62 @@ const init = () => {
 
       const arr = positions.array;
       for (let i = 0; i < arr.length; i += 3) {
-        const pz = originSunPositions[i+2];
-        const disZ = (sunZ+pz)-cameraZ;
-        const disY = (sunPoints.position.y+originSunPositions[i+1])-cameraY;
-        const dis = Math.sqrt(disZ*disZ + disY*disY);
-        if (dis < baseDis ) {
-          positions.array[i+2] = (originSunPositions[i+2] + bollDis*(baseDis-dis)/baseDis)*randomParams[i+2]*20;
-          positions.array[i] = originSunPositions[i] + randomParams[i]*positions.array[i+2]*2; // 横向 x
-          positions.array[i+1] = originSunPositions[i+1] + randomParams[i+1]*positions.array[i+2]*2; // 纵向 y
+        const pz = originSunPositions[i + 2];
+        const disZ = (sunZ + pz) - cameraZ;
+        const disY = (sunPoints.position.y + originSunPositions[i + 1]) - cameraY;
+        const dis = Math.sqrt(disZ * disZ + disY * disY);
+        if (dis < baseDis) {
+          positions.array[i + 2] = (originSunPositions[i + 2] + bollDis * (baseDis - dis) / baseDis) * randomParams[i + 2] * 20;
+          positions.array[i] = originSunPositions[i] + randomParams[i] * positions.array[i + 2] * 2; // 横向 x
+          positions.array[i + 1] = originSunPositions[i + 1] + randomParams[i + 1] * positions.array[i + 2] * 2; // 纵向 y
         } else {
           positions.array[i] = originSunPositions[i];
-          positions.array[i+1] = originSunPositions[i+1];
-          positions.array[i+2] = originSunPositions[i+2]; 
+          positions.array[i + 1] = originSunPositions[i + 1];
+          positions.array[i + 2] = originSunPositions[i + 2];
         }
 
-        const itemScale = positions.array[i+2]/20;
-        sunScales[i] =  itemScale>5 ? 5: (itemScale<1 ? 1 :itemScale);
-        
+        const itemScale = positions.array[i + 2] / 20;
+        sunScales[i] = itemScale > 5 ? 5 : (itemScale < 1 ? 1 : itemScale);
+
       }
       pointGeometry.setAttribute('scale', new THREE.BufferAttribute(sunScales, 1));
       positions.needsUpdate = true;
     }
     let mouseX: number = 0;
     let mouseY: number = 0;
+    const zoomBase = 1;
+    const factorBase = 100;
     const onMouseMove = (event: PointerEvent) => {
       if (event.isPrimary === false) return;
       mouseX = (event.clientX - renderConfig.RENDER_WIDTH / 2) * 2 / renderConfig.RENDER_WIDTH;
-      mouseY = event.clientY - renderConfig.RENDER_HEIGHT / 2;
-      console.log(mouseX, mouseY);
+      mouseY = (event.clientY - renderConfig.RENDER_HEIGHT / 2) * 2 / renderConfig.RENDER_WIDTH;
+      // mouseX = Math.abs(mouseX) >= 0.5 ? mouseX : 0;
+      // mouseY = Math.abs(mouseY) >= 0.3 ? mouseY : 0;
+      // console.log(mouseX, mouseY);
     }
     window.addEventListener('pointermove', onMouseMove, false);
 
+    // 自动播放
+    // const clocker = new THREE.Clock();
+    const animate = () => {
+      requestAnimationFrame(animate);
+      // cameraObj.position.x += (mouseX - cameraObj.position.x) * .0005;
+      // cameraObj.position.y += (- mouseY - cameraObj.position.y) * .0005;
+      // cameraObj.position.x = mouseX > 0 ? 5 : -5;
+      // console.log(cameraObj.position);
+      // const targetPos = glft.scene.position.clone();
+      // targetPos.x = glft.scene.position.x + mouseX * 5;
+      // console.log(Math.sign(mouseX) * 0.5 / Math.pow(1.1, mouseX * 100));
+      // cameraObj.position.x += Math.sign(mouseX) * 0.0005 / Math.pow(1.1, mouseX * 100);
+      // cameraObj.position.y += -Math.sign(mouseY) * 0.0005 / Math.pow(1.1, mouseY * 100)
+      cameraObj.lookAt(0, 1.6589, -6.4);
+      renderer.render(scene, cameraObj);
+      composer.render();
+    }
+    animate();
 
+
+    // 滚轴动画
     ScrollSmoother.create({
       wrapper: '#app',
       content: '#content',
@@ -260,7 +285,6 @@ const init = () => {
         moveSunPoints();
         // console.log(self.progress);
         mixer.setTime(5.999 * self.progress);
-        cameraMixer.setTime(5.999 * self.progress);
         renderer.render(scene, cameraObj);
         composer.render();
       }
@@ -283,21 +307,6 @@ const init = () => {
       })
     })
 
-    // 自动播放
-    // const clocker = new THREE.Clock();
-    // const animate = () => {
-    //   requestAnimationFrame(animate);
-    //   // cameraObj.position.x += (mouseX - cameraObj.position.x) * .0005;
-    //   // cameraObj.position.y += (- mouseY - cameraObj.position.y) * .0005;
-    //   // cameraObj.position.x = mouseX > 0 ? 5 : -5;
-    //   // console.log(cameraObj.position);
-    //   // const targetPos = glft.scene.position.clone();
-    //   // targetPos.x = glft.scene.position.x + mouseX * 5; 
-    //   // cameraObj.lookAt(targetPos);
-    //   renderer.render(scene, cameraObj);
-    //   composer.render();
-    // }
-    // animate();
   })
 
 }
