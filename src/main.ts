@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { detectWebgl } from './detect-webgl';
+// import { detectWebgl } from './detect-webgl';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -47,13 +47,13 @@ const createCamera = (camera?: THREE.PerspectiveCamera) => {
   return _camera;
 }
 
-const createOrbitControls = (render: THREE.WebGLRenderer, camera: THREE.Camera) => {
-  const controls = new OrbitControls(camera, render.domElement);
-  controls.enableDamping = true;
-  controls.minDistance = 0;
-  controls.maxDistance = 3000;
-  return controls;
-}
+// const createOrbitControls = (render: THREE.WebGLRenderer, camera: THREE.Camera) => {
+//   const controls = new OrbitControls(camera, render.domElement);
+//   controls.enableDamping = true;
+//   controls.minDistance = 0;
+//   controls.maxDistance = 3000;
+//   return controls;
+// }
 
 let sun, sunGeometry, pointGeometry: THREE.BufferGeometry, sunScales: Float32Array, sunPoints: THREE.Points, positionArr, originSunPositions: Float32Array, randomParams: Array<any>=[];
 
@@ -111,8 +111,8 @@ const initSun = (glft: any ) => {
 
 // 渲染流程
 const init = () => {
-  if (!detectWebgl()) return;
-  const appContainer = document.querySelector('#render');
+  // if (!detectWebgl()) return;
+  const appContainer = document.querySelector<HTMLDivElement>('#render');
   if (!appContainer) return;
   const renderer = createRender();
   appContainer.appendChild(renderer.domElement);
@@ -239,6 +239,16 @@ const init = () => {
       pointGeometry.setAttribute('scale', new THREE.BufferAttribute(sunScales, 1));
       positions.needsUpdate = true;
     }
+    let mouseX: number = 0;
+    let mouseY: number = 0;
+    const onMouseMove = (event: PointerEvent) => {
+      if (event.isPrimary === false) return;
+      mouseX = (event.clientX - renderConfig.RENDER_WIDTH / 2) * 2 / renderConfig.RENDER_WIDTH;
+      mouseY = event.clientY - renderConfig.RENDER_HEIGHT / 2;
+      console.log(mouseX, mouseY);
+    }
+    window.addEventListener('pointermove', onMouseMove, false);
+
 
     ScrollSmoother.create({
       wrapper: '#app',
@@ -248,6 +258,7 @@ const init = () => {
       normalizeScroll: true,
       onUpdate: (self) => {
         moveSunPoints();
+        // console.log(self.progress);
         mixer.setTime(5.999 * self.progress);
         cameraMixer.setTime(5.999 * self.progress);
         renderer.render(scene, cameraObj);
@@ -255,17 +266,7 @@ const init = () => {
       }
     })
 
-    // const tl = gsap.timeline({
-    //   scrollTrigger:{
-    //     trigger:'.scene',
-    //     scrub:true,
-    //     pin:true,
-    //     start: "top top",
-    //     end: "+=100%",
-    //   }
-    // })
-
-    gsap.from('#logo', { x: -999,duration:2 })
+    gsap.from('#logo', { x: -999, duration: 2 })
 
     gsap.utils.toArray('.scene').forEach((sceneEle) => {
       gsap.from((sceneEle as HTMLDivElement).querySelector('section'), {
@@ -286,11 +287,15 @@ const init = () => {
     // const clocker = new THREE.Clock();
     // const animate = () => {
     //   requestAnimationFrame(animate);
-    //   const delta = clocker.getDelta();
-    //   mixer.update(delta);
-    //   cameraMixer.update(delta);
+    //   // cameraObj.position.x += (mouseX - cameraObj.position.x) * .0005;
+    //   // cameraObj.position.y += (- mouseY - cameraObj.position.y) * .0005;
+    //   // cameraObj.position.x = mouseX > 0 ? 5 : -5;
+    //   // console.log(cameraObj.position);
+    //   // const targetPos = glft.scene.position.clone();
+    //   // targetPos.x = glft.scene.position.x + mouseX * 5; 
+    //   // cameraObj.lookAt(targetPos);
     //   renderer.render(scene, cameraObj);
-    //   composer.render(delta);
+    //   composer.render();
     // }
     // animate();
   })
